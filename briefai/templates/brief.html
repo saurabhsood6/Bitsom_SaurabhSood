@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BriefAI — {{ meeting.company }} Brief</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <div class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">BriefAI</span>
+        <span class="logo-tagline">Sales Intelligence Agent</span>
+      </div>
+      <nav class="nav">
+        <a href="/" class="nav-link">← Back to Dashboard</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container main-content">
+    <div class="brief-page-header">
+      <div>
+        <h1 class="brief-company">{{ meeting.company }}</h1>
+        <p class="brief-meta">
+          <span>👤 {{ meeting.contact_name }}</span>
+          <span class="separator">·</span>
+          <span>🕐 {{ meeting.meeting_time_display }}</span>
+          <span class="separator">·</span>
+          <span class="deal-stage stage-{{ meeting.deal_stage | lower }}">{{ meeting.deal_stage }}</span>
+        </p>
+      </div>
+      <div class="brief-actions">
+        <button class="btn btn-secondary" onclick="generateBrief('{{ meeting.id }}', this)">Regenerate Brief</button>
+        <button class="btn btn-outline" onclick="window.print()">Print</button>
+      </div>
+    </div>
+
+    {% if brief %}
+    <div class="brief-generated-at">
+      Brief generated: {{ brief.generated_at[:16].replace('T', ' at ') }}
+    </div>
+
+    <div class="brief-grid">
+      <!-- Company Overview -->
+      <section class="brief-section section-overview">
+        <div class="section-header">
+          <span class="section-icon">🏢</span>
+          <h2>Company Overview</h2>
+        </div>
+        <p class="section-body">{{ brief.company_overview }}</p>
+      </section>
+
+      <!-- Recent News -->
+      <section class="brief-section section-news">
+        <div class="section-header">
+          <span class="section-icon">📰</span>
+          <h2>Recent News <span class="section-badge">Last 5 days</span></h2>
+        </div>
+        <ul class="brief-list">
+          {% for item in brief.recent_news %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <!-- CRM Context -->
+      <section class="brief-section section-crm">
+        <div class="section-header">
+          <span class="section-icon">💼</span>
+          <h2>CRM Context</h2>
+        </div>
+        <p class="section-body">{{ brief.crm_context }}</p>
+      </section>
+
+      <!-- Talking Points -->
+      <section class="brief-section section-talking">
+        <div class="section-header">
+          <span class="section-icon">💬</span>
+          <h2>Talking Points</h2>
+        </div>
+        <ul class="brief-list numbered">
+          {% for point in brief.talking_points %}
+          <li>{{ point }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <!-- Pain Points -->
+      <section class="brief-section section-pain highlight-warning">
+        <div class="section-header">
+          <span class="section-icon">⚠️</span>
+          <h2>Potential Pain Points</h2>
+        </div>
+        <ul class="brief-list">
+          {% for pain in brief.pain_points %}
+          <li>{{ pain }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <!-- Conversation Angle -->
+      <section class="brief-section section-angle highlight-success">
+        <div class="section-header">
+          <span class="section-icon">🎯</span>
+          <h2>Suggested Conversation Angle</h2>
+        </div>
+        <p class="section-body angle-text">{{ brief.conversation_angle }}</p>
+      </section>
+    </div>
+
+    {% else %}
+    <div class="no-brief">
+      <div class="empty-icon">📋</div>
+      <h2>No brief generated yet</h2>
+      <p>Click "Generate Brief" to create an AI-powered pre-meeting brief for this meeting.</p>
+      <button class="btn btn-primary btn-large" onclick="generateBrief('{{ meeting.id }}', this)">Generate Brief</button>
+    </div>
+    {% endif %}
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>BriefAI v1.0 — Powered by Claude AI (claude-haiku-4-5)</p>
+    </div>
+  </footer>
+
+  <script>
+    async function generateBrief(meetingId, btn) {
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Generating...';
+
+      try {
+        const resp = await fetch(`/meetings/${meetingId}/generate-brief`, { method: 'POST' });
+        const data = await resp.json();
+        if (resp.ok && data.status === 'success') {
+          window.location.reload();
+        } else {
+          alert('Brief generation failed: ' + (data.detail || 'Unknown error'));
+          btn.disabled = false;
+          btn.textContent = originalText;
+        }
+      } catch (err) {
+        alert('Network error: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    }
+  </script>
+</body>
+</html>

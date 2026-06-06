@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BriefAI — Sales Intelligence Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <div class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">BriefAI</span>
+        <span class="logo-tagline">Sales Intelligence Agent</span>
+      </div>
+      <nav class="nav">
+        <a href="/" class="nav-link active">Dashboard</a>
+        <a href="/api/meetings" class="nav-link">API</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container main-content">
+    <div class="page-header">
+      <h1>Upcoming Meetings</h1>
+      <p class="subtitle">{{ meetings | length }} meeting{{ 's' if meetings | length != 1 else '' }} scheduled</p>
+    </div>
+
+    {% if not meetings %}
+    <div class="empty-state">
+      <div class="empty-icon">📅</div>
+      <h2>No upcoming meetings</h2>
+      <p>Your calendar is clear. Check back later.</p>
+    </div>
+    {% else %}
+    <div class="meetings-grid">
+      {% for meeting in meetings %}
+      <div class="meeting-card {% if meeting.brief_status == 'ready' %}card-ready{% elif meeting.brief_status == 'generating' %}card-generating{% elif meeting.brief_status == 'failed' %}card-failed{% endif %}">
+        <div class="card-header">
+          <div class="company-info">
+            <h2 class="company-name">{{ meeting.company }}</h2>
+            <p class="contact-name">
+              <span class="icon">👤</span>{{ meeting.contact_name }}
+            </p>
+          </div>
+          <div class="status-badge status-{{ meeting.brief_status }}">
+            {% if meeting.brief_status == 'ready' %}✓ Brief Ready
+            {% elif meeting.brief_status == 'generating' %}⏳ Generating...
+            {% elif meeting.brief_status == 'failed' %}✗ Failed
+            {% else %}○ Pending{% endif %}
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="meeting-meta">
+            <div class="meta-item">
+              <span class="meta-label">🕐 Time</span>
+              <span class="meta-value">{{ meeting.meeting_time_display }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">📊 Deal Stage</span>
+              <span class="deal-stage stage-{{ meeting.deal_stage | lower }}">{{ meeting.deal_stage }}</span>
+            </div>
+          </div>
+
+          {% if meeting.notes %}
+          <div class="meeting-notes">
+            <span class="notes-label">Notes:</span> {{ meeting.notes }}
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="card-footer">
+          {% if meeting.brief_status == 'ready' %}
+            <a href="/meetings/{{ meeting.id }}/brief" class="btn btn-primary">View Brief</a>
+            <button class="btn btn-secondary" onclick="generateBrief('{{ meeting.id }}', this)">Regenerate</button>
+          {% elif meeting.brief_status == 'generating' %}
+            <button class="btn btn-disabled" disabled>Generating...</button>
+          {% else %}
+            <button class="btn btn-primary" onclick="generateBrief('{{ meeting.id }}', this)">
+              {% if meeting.brief_status == 'failed' %}Retry{% else %}Generate Brief{% endif %}
+            </button>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>BriefAI v1.0 — Powered by Claude AI (claude-haiku-4-5)</p>
+    </div>
+  </footer>
+
+  <script>
+    async function generateBrief(meetingId, btn) {
+      const card = btn.closest('.meeting-card');
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Generating...';
+      btn.classList.remove('btn-primary');
+      btn.classList.add('btn-disabled');
+
+      try {
+        const resp = await fetch(`/meetings/${meetingId}/generate-brief`, { method: 'POST' });
+        const data = await resp.json();
+        if (resp.ok && data.status === 'success') {
+          window.location.reload();
+        } else {
+          alert('Brief generation failed: ' + (data.detail || 'Unknown error'));
+          btn.disabled = false;
+          btn.textContent = originalText;
+          btn.classList.add('btn-primary');
+          btn.classList.remove('btn-disabled');
+        }
+      } catch (err) {
+        alert('Network error: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = originalText;
+        btn.classList.add('btn-primary');
+        btn.classList.remove('btn-disabled');
+      }
+    }
+  </script>
+</body>
+</html>

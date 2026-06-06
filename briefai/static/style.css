@@ -1,0 +1,367 @@
+/* BriefAI — Professional Sales Intelligence Dashboard Styles */
+
+:root {
+  --primary: #1a56db;
+  --primary-dark: #1241b5;
+  --primary-light: #e8f0fe;
+  --secondary: #6b7280;
+  --success: #059669;
+  --success-light: #ecfdf5;
+  --warning: #d97706;
+  --warning-light: #fffbeb;
+  --danger: #dc2626;
+  --danger-light: #fef2f2;
+  --bg: #f9fafb;
+  --surface: #ffffff;
+  --border: #e5e7eb;
+  --text: #111827;
+  --text-muted: #6b7280;
+  --shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px -1px rgba(0,0,0,0.1);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ── Header ── */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { font-size: 22px; }
+.logo-text {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: -0.3px;
+}
+.logo-tagline {
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.nav { display: flex; gap: 4px; }
+.nav-link {
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s;
+}
+.nav-link:hover, .nav-link.active {
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+/* ── Main Content ── */
+.main-content { flex: 1; padding: 32px 24px; }
+
+.page-header {
+  margin-bottom: 28px;
+}
+.page-header h1 { font-size: 26px; font-weight: 700; color: var(--text); }
+.subtitle { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+
+/* ── Meeting Cards Grid ── */
+.meetings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+  gap: 20px;
+}
+
+.meeting-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.15s;
+}
+.meeting-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+.card-ready { border-left: 4px solid var(--success); }
+.card-generating { border-left: 4px solid var(--warning); }
+.card-failed { border-left: 4px solid var(--danger); }
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 20px 12px;
+  gap: 12px;
+}
+
+.company-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.contact-name {
+  font-size: 13px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.status-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.status-ready { background: var(--success-light); color: var(--success); }
+.status-generating { background: var(--warning-light); color: var(--warning); }
+.status-failed { background: var(--danger-light); color: var(--danger); }
+.status-pending { background: #f3f4f6; color: var(--text-muted); }
+
+.card-body { padding: 0 20px 14px; }
+
+.meeting-meta {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.meta-item { display: flex; align-items: center; gap: 6px; }
+.meta-label { font-size: 12px; color: var(--text-muted); }
+.meta-value { font-size: 13px; font-weight: 500; color: var(--text); }
+
+.deal-stage {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.stage-discovery { background: #ede9fe; color: #7c3aed; }
+.stage-proposal { background: #dbeafe; color: #1d4ed8; }
+.stage-negotiation { background: #fef9c3; color: #a16207; }
+.stage-closing { background: var(--success-light); color: var(--success); }
+
+.meeting-notes {
+  font-size: 13px;
+  color: var(--text-muted);
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-top: 6px;
+  border-left: 3px solid var(--border);
+}
+.notes-label { font-weight: 600; color: var(--text-muted); }
+
+.card-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+}
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  text-decoration: none;
+}
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-secondary { background: #f3f4f6; color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--border); }
+.btn-outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+.btn-outline:hover { background: var(--primary-light); }
+.btn-disabled { background: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
+.btn-large { padding: 12px 28px; font-size: 15px; }
+
+/* ── Brief Page ── */
+.brief-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 20px;
+}
+.brief-company { font-size: 28px; font-weight: 800; }
+.brief-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.separator { color: var(--border); }
+.brief-actions { display: flex; gap: 10px; flex-shrink: 0; }
+.brief-generated-at {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+.brief-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.brief-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  box-shadow: var(--shadow);
+}
+.section-overview { grid-column: 1 / -1; }
+.section-angle { grid-column: 1 / -1; }
+.highlight-warning { border-color: #fde68a; background: var(--warning-light); }
+.highlight-success { border-color: #a7f3d0; background: var(--success-light); }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.section-icon { font-size: 18px; }
+.section-header h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-badge {
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--border);
+  color: var(--text-muted);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.section-body {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.7;
+}
+.angle-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: #065f46;
+}
+
+.brief-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.brief-list li {
+  font-size: 13.5px;
+  color: var(--text);
+  line-height: 1.6;
+  padding-left: 18px;
+  position: relative;
+}
+.brief-list li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--primary);
+  font-weight: 700;
+}
+.brief-list.numbered { counter-reset: item; }
+.brief-list.numbered li::before {
+  counter-increment: item;
+  content: counter(item) ".";
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ── Empty / No-brief states ── */
+.empty-state, .no-brief {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--text-muted);
+}
+.empty-icon { font-size: 48px; margin-bottom: 16px; }
+.empty-state h2, .no-brief h2 { font-size: 20px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+.empty-state p, .no-brief p { font-size: 14px; margin-bottom: 20px; }
+
+/* ── Footer ── */
+.footer {
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  padding: 16px 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ── Print styles ── */
+@media print {
+  .header, .footer, .brief-actions { display: none; }
+  .brief-section { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
+  .brief-grid { grid-template-columns: 1fr; }
+  .section-overview, .section-angle { grid-column: 1; }
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .meetings-grid { grid-template-columns: 1fr; }
+  .brief-grid { grid-template-columns: 1fr; }
+  .section-overview, .section-angle { grid-column: 1; }
+  .brief-page-header { flex-direction: column; }
+}
