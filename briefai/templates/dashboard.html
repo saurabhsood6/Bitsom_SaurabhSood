@@ -180,52 +180,49 @@
         </div>
       </div>
 
-      <!-- Actions -->
-      <div style="display:flex; flex-direction:column; gap:6px; flex-shrink:0; align-items:flex-end;" onclick="event.preventDefault(); event.stopPropagation();">
+      <!-- Actions — all in one row -->
+      <div style="display:flex; gap:6px; flex-shrink:0; align-items:center;" onclick="event.preventDefault(); event.stopPropagation();">
 
-        <!-- Primary action row -->
-        <div style="display:flex; gap:6px; align-items:center;">
-          {% if meeting.brief_status == 'ready' %}
-            <a href="/meetings/{{ meeting.id }}/brief" class="btn btn-primary btn-sm">
-              <i class="ti ti-file-text"></i> View brief
-            </a>
-            <button class="btn btn-sm" onclick="generateBrief('{{ meeting.id }}', this)" title="Regenerate brief">
-              <i class="ti ti-refresh"></i> Regenerate
-            </button>
-          {% elif meeting.brief_status == 'generating' %}
-            <button class="btn btn-sm" disabled>
-              <i class="ti ti-loader"></i> Generating…
-            </button>
-          {% elif meeting.brief_status == 'failed' %}
-            <button class="btn btn-sm btn-danger" onclick="generateBrief('{{ meeting.id }}', this)">
-              <i class="ti ti-refresh"></i> Retry
-            </button>
-          {% else %}
-            <button class="btn btn-primary btn-sm" onclick="generateBrief('{{ meeting.id }}', this)">
-              <i class="ti ti-sparkles"></i> Generate brief
-            </button>
-          {% endif %}
-        </div>
-
-        <!-- Auto-brief + send email row -->
-        <div style="display:flex; gap:6px; align-items:center;">
-          <!-- Auto-generate toggle -->
-          <label style="display:flex; align-items:center; gap:5px; font-size:11px; color:var(--gray-500); cursor:pointer; white-space:nowrap;"
-                 title="Auto-generate brief 2 hours before this meeting">
-            <input type="checkbox" id="auto-{{ meeting.id }}"
-              {% if meeting.auto_brief %}checked{% endif %}
-              onchange="toggleAutoBrief('{{ meeting.id }}', this)"
-              style="width:13px; height:13px; cursor:pointer; accent-color:var(--navy);">
-            Auto-brief 2h before
-          </label>
-
-          <!-- Send to email -->
-          <button class="btn btn-sm" style="font-size:10px; padding:3px 8px;"
-            onclick="openSendEmail('{{ meeting.id }}', this)"
-            {% if meeting.brief_status != 'ready' %}disabled title="Generate a brief first"{% endif %}>
-            <i class="ti ti-mail"></i> Send
+        {% if meeting.brief_status == 'ready' %}
+          <a href="/meetings/{{ meeting.id }}/brief" class="btn btn-primary btn-sm">
+            <i class="ti ti-file-text"></i> View brief
+          </a>
+          <button class="btn btn-sm" onclick="generateBrief('{{ meeting.id }}', this)" title="Regenerate">
+            <i class="ti ti-refresh"></i> Regenerate
           </button>
-        </div>
+        {% elif meeting.brief_status == 'generating' %}
+          <button class="btn btn-sm" disabled>
+            <i class="ti ti-loader"></i> Generating…
+          </button>
+        {% elif meeting.brief_status == 'failed' %}
+          <button class="btn btn-sm btn-danger" onclick="generateBrief('{{ meeting.id }}', this)">
+            <i class="ti ti-refresh"></i> Retry
+          </button>
+        {% else %}
+          <button class="btn btn-primary btn-sm" onclick="generateBrief('{{ meeting.id }}', this)">
+            <i class="ti ti-sparkles"></i> Generate brief
+          </button>
+        {% endif %}
+
+        <!-- Separator -->
+        <div style="width:1px; height:20px; background:var(--gray-200);"></div>
+
+        <!-- Auto-brief toggle -->
+        <label style="display:flex; align-items:center; gap:4px; font-size:11px; color:var(--gray-500); cursor:pointer; white-space:nowrap;"
+               title="Auto-generate brief 2 hours before this meeting">
+          <input type="checkbox" id="auto-{{ meeting.id }}"
+            {% if meeting.auto_brief %}checked{% endif %}
+            onchange="toggleAutoBrief('{{ meeting.id }}', this)"
+            style="width:13px; height:13px; cursor:pointer; accent-color:var(--navy);">
+          Auto 2h
+        </label>
+
+        <!-- Send to email -->
+        <button class="btn btn-sm" style="padding:4px 8px;"
+          onclick="openSendEmail('{{ meeting.id }}', this)"
+          {% if meeting.brief_status != 'ready' %}disabled title="Generate a brief first"{% endif %}>
+          <i class="ti ti-mail"></i>
+        </button>
 
       </div>
     </a>

@@ -76,7 +76,6 @@ def _run_auto_brief_job():
 def startup_event():
     init_db()
     seed_meetings()
-    sync_brief_statuses()   # fix any stale 'pending' statuses where a brief already exists
 
     if is_google_calendar_configured():
         print("[startup] Google Calendar detected — syncing meetings...")
@@ -86,6 +85,9 @@ def startup_event():
             print(f"[startup] Synced {len(meetings)} meetings from Google Calendar.")
         except Exception as e:
             print(f"[startup] Google Calendar sync failed: {e}.")
+
+    # Run AFTER calendar sync so newly inserted gcal meetings are also fixed
+    sync_brief_statuses()
 
     try:
         from apscheduler.schedulers.background import BackgroundScheduler
