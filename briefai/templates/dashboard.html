@@ -1,129 +1,179 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BriefAI — Sales Intelligence Dashboard</title>
-  <link rel="stylesheet" href="/static/style.css" />
-</head>
-<body>
-  <header class="header">
-    <div class="container header-inner">
-      <div class="logo">
-        <span class="logo-icon">⚡</span>
-        <span class="logo-text">BriefAI</span>
-        <span class="logo-tagline">Sales Intelligence Agent</span>
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block topbar_extras %}
+  {% set ready_count = meetings | selectattr('brief_status', 'equalto', 'ready') | list | length %}
+  {% if ready_count > 0 %}
+  <span class="topbar-badge">{{ ready_count }} brief{{ 's' if ready_count != 1 else '' }} ready</span>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<!-- Page header -->
+<div class="page-header">
+  <div class="page-header-row">
+    <div>
+      <div class="page-title">Good morning, Arjun 👋</div>
+      <div class="page-sub">{{ meetings | length }} meeting{{ 's' if meetings | length != 1 else '' }} scheduled · Generate briefs before you go</div>
+    </div>
+    <div class="page-actions">
+      <button class="btn" onclick="generateAllBriefs(this)">
+        <i class="ti ti-sparkles"></i> Generate all briefs
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Stats row -->
+{% set ready   = meetings | selectattr('brief_status', 'equalto', 'ready')     | list | length %}
+{% set pending = meetings | selectattr('brief_status', 'equalto', 'pending')   | list | length %}
+{% set failed  = meetings | selectattr('brief_status', 'equalto', 'failed')    | list | length %}
+<div class="grid4" style="margin-bottom:20px">
+  <div class="card" style="margin-bottom:0; padding:14px 16px;">
+    <div class="metric-lbl">Total meetings</div>
+    <div class="metric-val">{{ meetings | length }}</div>
+  </div>
+  <div class="card" style="margin-bottom:0; padding:14px 16px;">
+    <div class="metric-lbl">Briefs ready</div>
+    <div class="metric-val" style="color:var(--green)">{{ ready }}</div>
+    <div class="metric-delta delta-up"><i class="ti ti-check"></i> Prepared</div>
+  </div>
+  <div class="card" style="margin-bottom:0; padding:14px 16px;">
+    <div class="metric-lbl">Pending</div>
+    <div class="metric-val" style="color:var(--amber)">{{ pending }}</div>
+    <div class="metric-delta delta-warn"><i class="ti ti-clock"></i> Not generated</div>
+  </div>
+  <div class="card" style="margin-bottom:0; padding:14px 16px;">
+    <div class="metric-lbl">Time saved</div>
+    <div class="metric-val">{{ ready * 45 }}m</div>
+    <div class="metric-delta delta-up"><i class="ti ti-trending-up"></i> vs manual prep</div>
+  </div>
+</div>
+
+<!-- Meetings list -->
+<div class="card" style="padding:0; overflow:hidden;">
+  <div style="padding:14px 18px; border-bottom:1px solid var(--gray-100); display:flex; align-items:center; justify-content:space-between;">
+    <div style="font-size:13px; font-weight:600;">Upcoming meetings</div>
+    <div style="font-size:11px; color:var(--gray-400); font-family:'DM Mono',monospace;">{{ meetings | length }} total</div>
+  </div>
+
+  {% if not meetings %}
+  <div class="coming-soon" style="padding:40px;">
+    <i class="ti ti-calendar-off"></i>
+    <h2>No upcoming meetings</h2>
+    <p>Your calendar is clear. Check back later.</p>
+  </div>
+  {% else %}
+  <div style="padding:12px 14px; display:flex; flex-direction:column; gap:8px;">
+    {% for meeting in meetings %}
+    <div class="list-row" style="cursor:default; align-items:flex-start; padding:14px 16px;">
+
+      <!-- Avatar + company -->
+      <div class="avatar" style="width:38px;height:38px;font-size:14px;border-radius:var(--radius-md);background:var(--blue-light);color:var(--blue-text);flex-shrink:0;margin-top:2px;">
+        {{ meeting.company[:2].upper() }}
       </div>
-      <nav class="nav">
-        <a href="/" class="nav-link active">Dashboard</a>
-        <a href="/api/meetings" class="nav-link">API</a>
-      </nav>
-    </div>
-  </header>
 
-  <main class="container main-content">
-    <div class="page-header">
-      <h1>Upcoming Meetings</h1>
-      <p class="subtitle">{{ meetings | length }} meeting{{ 's' if meetings | length != 1 else '' }} scheduled</p>
-    </div>
-
-    {% if not meetings %}
-    <div class="empty-state">
-      <div class="empty-icon">📅</div>
-      <h2>No upcoming meetings</h2>
-      <p>Your calendar is clear. Check back later.</p>
-    </div>
-    {% else %}
-    <div class="meetings-grid">
-      {% for meeting in meetings %}
-      <div class="meeting-card {% if meeting.brief_status == 'ready' %}card-ready{% elif meeting.brief_status == 'generating' %}card-generating{% elif meeting.brief_status == 'failed' %}card-failed{% endif %}">
-        <div class="card-header">
-          <div class="company-info">
-            <h2 class="company-name">{{ meeting.company }}</h2>
-            <p class="contact-name">
-              <span class="icon">👤</span>{{ meeting.contact_name }}
-            </p>
-          </div>
-          <div class="status-badge status-{{ meeting.brief_status }}">
-            {% if meeting.brief_status == 'ready' %}✓ Brief Ready
-            {% elif meeting.brief_status == 'generating' %}⏳ Generating...
-            {% elif meeting.brief_status == 'failed' %}✗ Failed
-            {% else %}○ Pending{% endif %}
-          </div>
-        </div>
-
-        <div class="card-body">
-          <div class="meeting-meta">
-            <div class="meta-item">
-              <span class="meta-label">🕐 Time</span>
-              <span class="meta-value">{{ meeting.meeting_time_display }}</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-label">📊 Deal Stage</span>
-              <span class="deal-stage stage-{{ meeting.deal_stage | lower }}">{{ meeting.deal_stage }}</span>
-            </div>
-          </div>
-
-          {% if meeting.notes %}
-          <div class="meeting-notes">
-            <span class="notes-label">Notes:</span> {{ meeting.notes }}
-          </div>
-          {% endif %}
-        </div>
-
-        <div class="card-footer">
-          {% if meeting.brief_status == 'ready' %}
-            <a href="/meetings/{{ meeting.id }}/brief" class="btn btn-primary">View Brief</a>
-            <button class="btn btn-secondary" onclick="generateBrief('{{ meeting.id }}', this)">Regenerate</button>
-          {% elif meeting.brief_status == 'generating' %}
-            <button class="btn btn-disabled" disabled>Generating...</button>
+      <!-- Main info -->
+      <div class="row-main">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+          <span style="font-size:14px; font-weight:600;">{{ meeting.company }}</span>
+          <!-- Deal stage pill -->
+          {% if meeting.deal_stage == 'Closing' %}
+            <span class="pill pill-green"><i class="ti ti-star" style="font-size:10px"></i> {{ meeting.deal_stage }}</span>
+          {% elif meeting.deal_stage == 'Negotiation' %}
+            <span class="pill pill-warn">{{ meeting.deal_stage }}</span>
+          {% elif meeting.deal_stage == 'Proposal' %}
+            <span class="pill pill-blue">{{ meeting.deal_stage }}</span>
           {% else %}
-            <button class="btn btn-primary" onclick="generateBrief('{{ meeting.id }}', this)">
-              {% if meeting.brief_status == 'failed' %}Retry{% else %}Generate Brief{% endif %}
-            </button>
+            <span class="pill pill-gray">{{ meeting.deal_stage }}</span>
+          {% endif %}
+          <!-- Brief status -->
+          {% if meeting.brief_status == 'ready' %}
+            <span class="pill pill-green"><i class="ti ti-check" style="font-size:10px"></i> Brief ready</span>
+          {% elif meeting.brief_status == 'generating' %}
+            <span class="pill pill-warn"><i class="ti ti-loader" style="font-size:10px"></i> Generating…</span>
+          {% elif meeting.brief_status == 'failed' %}
+            <span class="pill pill-red"><i class="ti ti-x" style="font-size:10px"></i> Failed</span>
+          {% else %}
+            <span class="pill pill-gray">No brief</span>
+          {% endif %}
+        </div>
+
+        <div style="display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--gray-500);">
+          <span><i class="ti ti-user" style="font-size:13px; vertical-align:-2px;"></i> {{ meeting.contact_name }}</span>
+          <span><i class="ti ti-clock" style="font-size:13px; vertical-align:-2px;"></i> {{ meeting.meeting_time_display }}</span>
+          {% if meeting.notes %}
+          <span style="max-width:340px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+            <i class="ti ti-notes" style="font-size:13px; vertical-align:-2px;"></i> {{ meeting.notes }}
+          </span>
           {% endif %}
         </div>
       </div>
-      {% endfor %}
+
+      <!-- Actions -->
+      <div style="display:flex; gap:6px; flex-shrink:0; align-items:center; margin-top:2px;">
+        {% if meeting.brief_status == 'ready' %}
+          <a href="/meetings/{{ meeting.id }}/brief" class="btn btn-primary btn-sm">
+            <i class="ti ti-file-text"></i> View brief
+          </a>
+          <button class="btn btn-sm" onclick="generateBrief('{{ meeting.id }}', this)" title="Regenerate">
+            <i class="ti ti-refresh"></i>
+          </button>
+        {% elif meeting.brief_status == 'generating' %}
+          <button class="btn btn-sm" disabled>
+            <i class="ti ti-loader"></i> Generating…
+          </button>
+        {% else %}
+          <button class="btn btn-primary btn-sm" onclick="generateBrief('{{ meeting.id }}', this)">
+            <i class="ti ti-sparkles"></i>
+            {% if meeting.brief_status == 'failed' %}Retry{% else %}Generate brief{% endif %}
+          </button>
+        {% endif %}
+      </div>
     </div>
-    {% endif %}
-  </main>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
 
-  <footer class="footer">
-    <div class="container">
-      <p>BriefAI v1.0 — Powered by Claude AI (claude-haiku-4-5)</p>
-    </div>
-  </footer>
+{% endblock %}
 
-  <script>
-    async function generateBrief(meetingId, btn) {
-      const card = btn.closest('.meeting-card');
-      const originalText = btn.textContent;
-      btn.disabled = true;
-      btn.textContent = 'Generating...';
-      btn.classList.remove('btn-primary');
-      btn.classList.add('btn-disabled');
-
-      try {
-        const resp = await fetch(`/meetings/${meetingId}/generate-brief`, { method: 'POST' });
-        const data = await resp.json();
-        if (resp.ok && data.status === 'success') {
-          window.location.reload();
-        } else {
-          alert('Brief generation failed: ' + (data.detail || 'Unknown error'));
-          btn.disabled = false;
-          btn.textContent = originalText;
-          btn.classList.add('btn-primary');
-          btn.classList.remove('btn-disabled');
-        }
-      } catch (err) {
-        alert('Network error: ' + err.message);
+{% block scripts %}
+<script>
+  async function generateBrief(meetingId, btn) {
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader"></i> Generating…';
+    try {
+      const resp = await fetch(`/meetings/${meetingId}/generate-brief`, { method: 'POST' });
+      const data = await resp.json();
+      if (resp.ok && data.status === 'success') {
+        window.location.reload();
+      } else {
+        alert('Failed: ' + (data.detail || 'Unknown error'));
         btn.disabled = false;
-        btn.textContent = originalText;
-        btn.classList.add('btn-primary');
-        btn.classList.remove('btn-disabled');
+        btn.innerHTML = orig;
       }
+    } catch (err) {
+      alert('Network error: ' + err.message);
+      btn.disabled = false;
+      btn.innerHTML = orig;
     }
-  </script>
-</body>
-</html>
+  }
+
+  async function generateAllBriefs(btn) {
+    const pendingBtns = document.querySelectorAll('button[onclick*="generateBrief"]');
+    if (!pendingBtns.length) return;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader"></i> Generating all…';
+    for (const b of pendingBtns) {
+      const match = b.getAttribute('onclick').match(/'([^']+)'/);
+      if (match) await generateBrief(match[1], b).catch(() => {});
+    }
+    window.location.reload();
+  }
+</script>
+{% endblock %}

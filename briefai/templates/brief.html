@@ -1,154 +1,185 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BriefAI — {{ meeting.company }} Brief</title>
-  <link rel="stylesheet" href="/static/style.css" />
-</head>
-<body>
-  <header class="header">
-    <div class="container header-inner">
-      <div class="logo">
-        <span class="logo-icon">⚡</span>
-        <span class="logo-text">BriefAI</span>
-        <span class="logo-tagline">Sales Intelligence Agent</span>
+{% extends "base.html" %}
+
+{% block title %}{{ meeting.company }} Brief{% endblock %}
+{% block nav_brief %}active{% endblock %}
+
+{% block topbar_extras %}
+  <span class="topbar-badge">{{ meeting.company }}</span>
+{% endblock %}
+
+{% block content %}
+
+<!-- Brief header card (navy) -->
+<div class="brief-hdr">
+  <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <div>
+      <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; opacity:0.5; margin-bottom:6px;">
+        Pre-meeting brief
       </div>
-      <nav class="nav">
-        <a href="/" class="nav-link">← Back to Dashboard</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="container main-content">
-    <div class="brief-page-header">
-      <div>
-        <h1 class="brief-company">{{ meeting.company }}</h1>
-        <p class="brief-meta">
-          <span>👤 {{ meeting.contact_name }}</span>
-          <span class="separator">·</span>
-          <span>🕐 {{ meeting.meeting_time_display }}</span>
-          <span class="separator">·</span>
-          <span class="deal-stage stage-{{ meeting.deal_stage | lower }}">{{ meeting.deal_stage }}</span>
-        </p>
+      <div class="brief-co">{{ meeting.company }}</div>
+      <div class="brief-meta">
+        <span><i class="ti ti-user"></i> {{ meeting.contact_name }}</span>
+        <span><i class="ti ti-clock"></i> {{ meeting.meeting_time_display }}</span>
+        <span><i class="ti ti-chart-bar"></i> {{ meeting.deal_stage }}</span>
       </div>
-      <div class="brief-actions">
-        <button class="btn btn-secondary" onclick="generateBrief('{{ meeting.id }}', this)">Regenerate Brief</button>
-        <button class="btn btn-outline" onclick="window.print()">Print</button>
+      {% if brief %}
+      <div class="brief-stamp">Generated {{ brief.generated_at[:16].replace('T', ' at ') }}</div>
+      {% endif %}
+    </div>
+    <div style="display:flex; gap:8px; flex-shrink:0;">
+      <a href="/" class="btn btn-sm" style="background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.2);color:#fff;">
+        <i class="ti ti-arrow-left"></i> Dashboard
+      </a>
+      <button class="btn btn-sm" style="background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.2);color:#fff;" onclick="window.print()">
+        <i class="ti ti-printer"></i> Print
+      </button>
+      <button class="btn btn-primary btn-sm" style="background:rgba(255,255,255,0.9);color:var(--navy);border-color:transparent;" onclick="generateBrief('{{ meeting.id }}', this)">
+        <i class="ti ti-refresh"></i> Regenerate
+      </button>
+    </div>
+  </div>
+</div>
+
+{% if brief %}
+
+<!-- Top row: Company overview + CRM context -->
+<div class="grid2">
+
+  <!-- Company overview -->
+  <div class="card" style="margin-bottom:0;">
+    <div class="card-header" style="margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="ins-icon ic-b"><i class="ti ti-building"></i></div>
+        <span style="font-size:13px;font-weight:600;">Company overview</span>
       </div>
     </div>
+    <p style="font-size:12px;color:var(--gray-700);line-height:1.7;">{{ brief.company_overview }}</p>
+  </div>
 
-    {% if brief %}
-    <div class="brief-generated-at">
-      Brief generated: {{ brief.generated_at[:16].replace('T', ' at ') }}
+  <!-- CRM context -->
+  <div class="card" style="margin-bottom:0;">
+    <div class="card-header" style="margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="ins-icon ic-gr"><i class="ti ti-database"></i></div>
+        <span style="font-size:13px;font-weight:600;">CRM context</span>
+      </div>
+      <span class="pill pill-blue" style="font-size:10px;">{{ meeting.deal_stage }}</span>
     </div>
+    <p style="font-size:12px;color:var(--gray-700);line-height:1.7;">{{ brief.crm_context }}</p>
+  </div>
 
-    <div class="brief-grid">
-      <!-- Company Overview -->
-      <section class="brief-section section-overview">
-        <div class="section-header">
-          <span class="section-icon">🏢</span>
-          <h2>Company Overview</h2>
-        </div>
-        <p class="section-body">{{ brief.company_overview }}</p>
-      </section>
+</div>
 
-      <!-- Recent News -->
-      <section class="brief-section section-news">
-        <div class="section-header">
-          <span class="section-icon">📰</span>
-          <h2>Recent News <span class="section-badge">Last 5 days</span></h2>
-        </div>
-        <ul class="brief-list">
-          {% for item in brief.recent_news %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
-      </section>
-
-      <!-- CRM Context -->
-      <section class="brief-section section-crm">
-        <div class="section-header">
-          <span class="section-icon">💼</span>
-          <h2>CRM Context</h2>
-        </div>
-        <p class="section-body">{{ brief.crm_context }}</p>
-      </section>
-
-      <!-- Talking Points -->
-      <section class="brief-section section-talking">
-        <div class="section-header">
-          <span class="section-icon">💬</span>
-          <h2>Talking Points</h2>
-        </div>
-        <ul class="brief-list numbered">
-          {% for point in brief.talking_points %}
-          <li>{{ point }}</li>
-          {% endfor %}
-        </ul>
-      </section>
-
-      <!-- Pain Points -->
-      <section class="brief-section section-pain highlight-warning">
-        <div class="section-header">
-          <span class="section-icon">⚠️</span>
-          <h2>Potential Pain Points</h2>
-        </div>
-        <ul class="brief-list">
-          {% for pain in brief.pain_points %}
-          <li>{{ pain }}</li>
-          {% endfor %}
-        </ul>
-      </section>
-
-      <!-- Conversation Angle -->
-      <section class="brief-section section-angle highlight-success">
-        <div class="section-header">
-          <span class="section-icon">🎯</span>
-          <h2>Suggested Conversation Angle</h2>
-        </div>
-        <p class="section-body angle-text">{{ brief.conversation_angle }}</p>
-      </section>
+<!-- Recent news -->
+<div class="card">
+  <div class="card-header" style="margin-bottom:12px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="ins-icon ic-b"><i class="ti ti-news"></i></div>
+      <span style="font-size:13px;font-weight:600;">Recent news</span>
     </div>
-
-    {% else %}
-    <div class="no-brief">
-      <div class="empty-icon">📋</div>
-      <h2>No brief generated yet</h2>
-      <p>Click "Generate Brief" to create an AI-powered pre-meeting brief for this meeting.</p>
-      <button class="btn btn-primary btn-large" onclick="generateBrief('{{ meeting.id }}', this)">Generate Brief</button>
+    <span class="pill pill-gray" style="font-size:10px;"><i class="ti ti-clock" style="font-size:10px;"></i> Last 5 days</span>
+  </div>
+  <div>
+    {% for item in brief.recent_news %}
+    <div class="ins-row">
+      <div class="ins-icon ic-b" style="margin-top:2px;"><i class="ti ti-news"></i></div>
+      <div class="ins-content">
+        <div class="ins-body">{{ item }}</div>
+      </div>
     </div>
-    {% endif %}
-  </main>
+    {% endfor %}
+  </div>
+</div>
 
-  <footer class="footer">
-    <div class="container">
-      <p>BriefAI v1.0 — Powered by Claude AI (claude-haiku-4-5)</p>
+<!-- Talking points + Pain points side by side -->
+<div class="grid2">
+
+  <!-- Talking points -->
+  <div class="card" style="margin-bottom:0;">
+    <div class="card-header" style="margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="ins-icon ic-g"><i class="ti ti-message-dots"></i></div>
+        <span style="font-size:13px;font-weight:600;">AI talking points</span>
+      </div>
+      <span class="pill pill-green" style="font-size:10px;">{{ brief.talking_points | length }} points</span>
     </div>
-  </footer>
+    {% for point in brief.talking_points %}
+    <div class="tp">{{ point }}</div>
+    {% endfor %}
+  </div>
 
-  <script>
-    async function generateBrief(meetingId, btn) {
-      const originalText = btn.textContent;
-      btn.disabled = true;
-      btn.textContent = 'Generating...';
+  <!-- Pain points -->
+  <div class="card" style="margin-bottom:0; border-color:#fca5a5;">
+    <div class="card-header" style="margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="ins-icon ic-r"><i class="ti ti-alert-triangle"></i></div>
+        <span style="font-size:13px;font-weight:600;">Potential pain points</span>
+      </div>
+      <span class="pill pill-red" style="font-size:10px;">{{ brief.pain_points | length }} signals</span>
+    </div>
+    {% for pain in brief.pain_points %}
+    <div class="ins-row">
+      <div class="dot dot-red" style="margin-top:6px; flex-shrink:0;"></div>
+      <div class="ins-content">
+        <div class="ins-body">{{ pain }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
 
-      try {
-        const resp = await fetch(`/meetings/${meetingId}/generate-brief`, { method: 'POST' });
-        const data = await resp.json();
-        if (resp.ok && data.status === 'success') {
-          window.location.reload();
-        } else {
-          alert('Brief generation failed: ' + (data.detail || 'Unknown error'));
-          btn.disabled = false;
-          btn.textContent = originalText;
-        }
-      } catch (err) {
-        alert('Network error: ' + err.message);
+</div>
+
+<!-- Conversation angle (full width) -->
+<div class="card" style="margin-top:14px; border-color:#6ee7b7; background:#f0fdf4;">
+  <div class="card-header" style="margin-bottom:10px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="ins-icon ic-g"><i class="ti ti-target-arrow"></i></div>
+      <span style="font-size:13px;font-weight:600;">Suggested conversation angle</span>
+    </div>
+    <span class="pill pill-green" style="font-size:10px;"><i class="ti ti-sparkles" style="font-size:10px;"></i> AI-generated</span>
+  </div>
+  <p style="font-size:13px; color:var(--green-text); line-height:1.7; font-weight:500;">{{ brief.conversation_angle }}</p>
+</div>
+
+{% else %}
+
+<!-- No brief state -->
+<div class="card">
+  <div class="coming-soon" style="padding:50px;">
+    <i class="ti ti-file-text" style="color:var(--gray-300);"></i>
+    <h2>No brief generated yet</h2>
+    <p style="margin-bottom:20px;">Generate an AI-powered pre-meeting brief for this meeting.</p>
+    <button class="btn btn-primary" onclick="generateBrief('{{ meeting.id }}', this)">
+      <i class="ti ti-sparkles"></i> Generate brief
+    </button>
+  </div>
+</div>
+
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  async function generateBrief(meetingId, btn) {
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader"></i> Generating…';
+    try {
+      const resp = await fetch(`/meetings/${meetingId}/generate-brief`, { method: 'POST' });
+      const data = await resp.json();
+      if (resp.ok && data.status === 'success') {
+        window.location.reload();
+      } else {
+        alert('Failed: ' + (data.detail || 'Unknown error'));
         btn.disabled = false;
-        btn.textContent = originalText;
+        btn.innerHTML = orig;
       }
+    } catch (err) {
+      alert('Network error: ' + err.message);
+      btn.disabled = false;
+      btn.innerHTML = orig;
     }
-  </script>
-</body>
-</html>
+  }
+</script>
+{% endblock %}
