@@ -85,6 +85,39 @@ def _get_credentials():
     return creds
 
 
+PERSONAL_EVENT_KEYWORDS = {
+    "birthday", "anniversary", "holiday", "vacation", "out of office",
+    "ooo", "lunch", "dinner", "breakfast", "personal", "family",
+    "wedding", "party", "celebration", "doctor", "dentist", "gym",
+    "workout", "travel", "flight", "hotel",
+}
+
+
+def _is_personal_event(event: dict) -> bool:
+    """Return True if the event looks like a personal/non-business event."""
+    summary = (event.get("summary") or "").lower()
+    description = (event.get("description") or "").lower()
+    event_type = (event.get("eventType") or "").lower()
+
+    # Google marks birthdays explicitly
+    if event_type in ("birthday", "focustime", "outofoffice"):
+        return True
+
+    # Check summary against known personal keywords
+    for kw in PERSONAL_EVENT_KEYWORDS:
+        if kw in summary:
+            return True
+
+    # All-day events with no attendees are typically personal
+    start = event.get("start", {})
+    is_all_day = "date" in start and "dateTime" not in start
+    attendees = event.get("attendees", [])
+    if is_all_day and not attendees:
+        return True
+
+    return False
+
+
 def _parse_event(event: dict) -> Optional[dict]:
     """Convert a Google Calendar event dict into a BriefAI meeting dict."""
     try:
@@ -186,6 +219,9 @@ def fetch_upcoming_from_google(max_results: int = 20) -> List[dict]:
     events = result.get("items", [])
     meetings = []
     for ev in events:
+        if _is_personal_event(ev):
+            print(f"[calendar] Skipping personal event: {ev.get('summary', '(no title)')}")
+            continue
         parsed = _parse_event(ev)
         if parsed:
             meetings.append(parsed)

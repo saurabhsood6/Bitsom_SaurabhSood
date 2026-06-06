@@ -22,6 +22,7 @@ from db.database import (
     save_brief,
     seed_meetings,
     update_meeting_brief_status,
+    update_meeting_stage,
     upsert_meetings_from_calendar,
 )
 from integrations.notification import notify
@@ -170,6 +171,18 @@ def send_notification(req: NotificationRequest):
 
     success = notify(brief, channel=req.channel, email_to=req.email_to)
     return {"status": "sent" if success else "fallback", "channel": req.channel}
+
+
+@app.post("/meetings/{meeting_id}/update-stage")
+def update_deal_stage(meeting_id: str, stage: str = Query(...)):
+    meeting = get_meeting_by_id(meeting_id)
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    valid = {"Discovery", "Proposal", "Negotiation", "Closing", "Won", "Lost"}
+    if stage not in valid:
+        raise HTTPException(status_code=400, detail=f"Invalid stage. Must be one of: {', '.join(sorted(valid))}")
+    update_meeting_stage(meeting_id, stage)
+    return {"status": "success", "deal_stage": stage}
 
 
 @app.post("/api/sync-calendar")

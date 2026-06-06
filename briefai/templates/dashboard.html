@@ -186,17 +186,20 @@
           <a href="/meetings/{{ meeting.id }}/brief" class="btn btn-primary btn-sm">
             <i class="ti ti-file-text"></i> View brief
           </a>
-          <button class="btn btn-sm" onclick="generateBrief('{{ meeting.id }}', this)" title="Regenerate">
-            <i class="ti ti-refresh"></i>
+          <button class="btn btn-sm" onclick="generateBrief('{{ meeting.id }}', this)" title="Regenerate brief">
+            <i class="ti ti-refresh"></i> Regenerate
           </button>
         {% elif meeting.brief_status == 'generating' %}
           <button class="btn btn-sm" disabled>
             <i class="ti ti-loader"></i> Generating…
           </button>
+        {% elif meeting.brief_status == 'failed' %}
+          <button class="btn btn-sm btn-danger" onclick="generateBrief('{{ meeting.id }}', this)">
+            <i class="ti ti-refresh"></i> Retry
+          </button>
         {% else %}
           <button class="btn btn-primary btn-sm" onclick="generateBrief('{{ meeting.id }}', this)">
-            <i class="ti ti-sparkles"></i>
-            {% if meeting.brief_status == 'failed' %}Retry{% else %}Generate brief{% endif %}
+            <i class="ti ti-sparkles"></i> Generate brief
           </button>
         {% endif %}
       </div>

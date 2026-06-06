@@ -26,7 +26,28 @@
       <div class="brief-stamp">Generated {{ brief.generated_at[:16].replace('T', ' at ') }}</div>
       {% endif %}
     </div>
-    <div style="display:flex; gap:8px; flex-shrink:0;">
+    <div style="display:flex; gap:8px; flex-shrink:0; align-items:center; flex-wrap:wrap;">
+
+      <!-- Deal stage dropdown -->
+      <div style="display:flex; align-items:center; gap:6px;">
+        <label style="font-size:11px; opacity:0.6; white-space:nowrap;">Deal stage</label>
+        <select id="stage-select" onchange="saveDealStage('{{ meeting.id }}', this)"
+          style="padding:5px 28px 5px 10px; border:1px solid rgba(255,255,255,0.25);
+                 border-radius:var(--radius-md); font-size:12px; font-family:inherit;
+                 color:#fff; background:rgba(255,255,255,0.15); cursor:pointer;
+                 appearance:none;
+                 background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22 viewBox=%220 0 10 6%22><path d=%22M0 0l5 6 5-6z%22 fill=%22white%22/></svg>');
+                 background-repeat:no-repeat; background-position:right 8px center;">
+          {% for s in ["Discovery","Proposal","Negotiation","Closing","Won","Lost"] %}
+            <option value="{{ s }}" {% if s == meeting.deal_stage %}selected{% endif %}
+              style="background:#1F3864; color:#fff;">{{ s }}</option>
+          {% endfor %}
+        </select>
+        <span id="stage-saved" style="font-size:11px; opacity:0; color:#6ee7b7; transition:opacity 0.4s;">
+          <i class="ti ti-check"></i> Saved
+        </span>
+      </div>
+
       <a href="/" class="btn btn-sm" style="background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.2);color:#fff;">
         <i class="ti ti-arrow-left"></i> Dashboard
       </a>
@@ -161,6 +182,20 @@
 
 {% block scripts %}
 <script>
+  async function saveDealStage(meetingId, select) {
+    const stage = select.value;
+    try {
+      const resp = await fetch(`/meetings/${meetingId}/update-stage?stage=${encodeURIComponent(stage)}`, { method: 'POST' });
+      if (resp.ok) {
+        const saved = document.getElementById('stage-saved');
+        saved.style.opacity = '1';
+        setTimeout(() => saved.style.opacity = '0', 2000);
+      }
+    } catch (err) {
+      alert('Failed to save deal stage: ' + err.message);
+    }
+  }
+
   async function generateBrief(meetingId, btn) {
     const orig = btn.innerHTML;
     btn.disabled = true;

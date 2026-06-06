@@ -213,6 +213,14 @@ def update_meeting_brief_status(meeting_id: str, status: str):
     conn.close()
 
 
+def update_meeting_stage(meeting_id: str, stage: str):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE meetings SET deal_stage = ? WHERE id = ?", (stage, meeting_id))
+    conn.commit()
+    conn.close()
+
+
 def save_brief(brief_data: dict) -> int:
     conn = get_connection()
     cursor = conn.cursor()
