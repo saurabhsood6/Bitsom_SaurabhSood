@@ -117,9 +117,13 @@ def seed_meetings():
 
 
 def upsert_meetings_from_calendar(meetings: list):
-    """Insert or update meetings synced from Google Calendar."""
+    """Insert or update meetings synced from Google Calendar, removing stale mock data."""
     conn = get_connection()
     cursor = conn.cursor()
+
+    # Remove mock seed meetings (id starts with 'meet_') so they don't mix with real events
+    cursor.execute("DELETE FROM meetings WHERE id LIKE 'meet_%'")
+
     for m in meetings:
         cursor.execute(
             """INSERT INTO meetings (id, contact_name, company, meeting_time, deal_stage, notes, brief_status)
@@ -128,7 +132,7 @@ def upsert_meetings_from_calendar(meetings: list):
                  contact_name = excluded.contact_name,
                  company      = excluded.company,
                  meeting_time = excluded.meeting_time,
-                 notes        = excluded.notes""",
+                 notes        = CASE WHEN excluded.notes != '' THEN excluded.notes ELSE meetings.notes END""",
             (m["id"], m["contact_name"], m["company"],
              m["meeting_time"], m.get("deal_stage", "Discovery"),
              m.get("notes", ""), m.get("brief_status", "pending"))

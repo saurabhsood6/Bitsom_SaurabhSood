@@ -122,6 +122,18 @@ def _parse_event(event: dict) -> Optional[dict]:
         summary = event.get("summary", "Untitled Meeting")
         description = event.get("description", "") or ""
 
+        # If company resolved to a personal email provider, use the meeting title instead
+        personal_domains = {"gmail.com", "googlemail.com", "yahoo.com", "outlook.com",
+                            "hotmail.com", "icloud.com", "protonmail.com"}
+        all_attendee_emails = [a.get("email", "") for a in attendees] + [organizer.get("email", "")]
+        all_external = [e for e in all_attendee_emails if not e.endswith(tuple(personal_domains))]
+        if company in ("Gmail", "Yahoo", "Outlook", "Hotmail", "Icloud", "Protonmail", "Unknown Company"):
+            if all_external:
+                company = _domain_to_company(all_external[0])
+            else:
+                # Last resort: derive from the meeting title
+                company = summary
+
         # Stable deterministic ID from Google event ID
         meeting_id = "gcal_" + hashlib.md5(event.get("id", summary).encode()).hexdigest()[:10]
 
