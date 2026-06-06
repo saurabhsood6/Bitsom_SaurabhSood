@@ -21,7 +21,11 @@
   <div class="page-header-row">
     <div>
       <div class="page-title">Good morning, Arjun 👋</div>
-      <div class="page-sub">{{ meetings | length }} meeting{{ 's' if meetings | length != 1 else '' }} scheduled · Generate briefs before you go</div>
+      <div class="page-sub">
+        {{ meetings | length }} meeting{{ 's' if meetings | length != 1 else '' }}
+        · {% if active_month %}{{ ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][active_month] }} {% endif %}{{ active_year }}
+        · Generate briefs before you go
+      </div>
     </div>
     <div class="page-actions">
       <button class="btn" onclick="generateAllBriefs(this)">
@@ -31,11 +35,56 @@
   </div>
 </div>
 
+<!-- Year / Month filter bar -->
+<div class="card" style="padding:12px 16px; margin-bottom:16px;">
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+
+    <span style="font-size:11px; font-weight:600; color:var(--gray-400); text-transform:uppercase; letter-spacing:0.06em; white-space:nowrap;">
+      <i class="ti ti-filter" style="font-size:13px; vertical-align:-2px;"></i> Filter
+    </span>
+
+    <!-- Year selector -->
+    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+      {% set years = periods | map(attribute='year') | unique | list %}
+      {% if active_year not in years %}{% set years = [active_year] + years %}{% endif %}
+      {% for y in years | sort %}
+        <a href="/?year={{ y }}"
+           class="pill {% if y == active_year and not active_month %}pill-navy{% else %}pill-gray{% endif %}"
+           style="cursor:pointer; text-decoration:none; font-size:12px; padding:4px 12px;">
+          {{ y }}
+        </a>
+      {% endfor %}
+    </div>
+
+    <div style="width:1px; height:20px; background:var(--gray-200);"></div>
+
+    <!-- Month selector (only shows months that have data for selected year) -->
+    {% set months_for_year = periods | selectattr('year', 'equalto', active_year) | map(attribute='month') | list %}
+    {% set month_names = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"] %}
+
+    <a href="/?year={{ active_year }}"
+       class="pill {% if not active_month %}pill-blue{% else %}pill-gray{% endif %}"
+       style="cursor:pointer; text-decoration:none; font-size:12px; padding:4px 12px;">
+      All months
+    </a>
+
+    {% for m in range(1, 13) %}
+      {% if m in months_for_year %}
+        <a href="/?year={{ active_year }}&month={{ m }}"
+           class="pill {% if m == active_month %}pill-blue{% else %}pill-gray{% endif %}"
+           style="cursor:pointer; text-decoration:none; font-size:12px; padding:4px 12px;">
+          {{ month_names[m] }}
+        </a>
+      {% endif %}
+    {% endfor %}
+
+  </div>
+</div>
+
 <!-- Stats row -->
-{% set ready   = meetings | selectattr('brief_status', 'equalto', 'ready')     | list | length %}
-{% set pending = meetings | selectattr('brief_status', 'equalto', 'pending')   | list | length %}
-{% set failed  = meetings | selectattr('brief_status', 'equalto', 'failed')    | list | length %}
-<div class="grid4" style="margin-bottom:20px">
+{% set ready   = meetings | selectattr('brief_status', 'equalto', 'ready')   | list | length %}
+{% set pending = meetings | selectattr('brief_status', 'equalto', 'pending') | list | length %}
+<div class="grid4" style="margin-bottom:16px">
   <div class="card" style="margin-bottom:0; padding:14px 16px;">
     <div class="metric-lbl">Total meetings</div>
     <div class="metric-val">{{ meetings | length }}</div>
@@ -60,22 +109,26 @@
 <!-- Meetings list -->
 <div class="card" style="padding:0; overflow:hidden;">
   <div style="padding:14px 18px; border-bottom:1px solid var(--gray-100); display:flex; align-items:center; justify-content:space-between;">
-    <div style="font-size:13px; font-weight:600;">Upcoming meetings</div>
+    <div style="font-size:13px; font-weight:600;">
+      Meetings
+      {% if active_month %}— {{ ["","January","February","March","April","May","June","July","August","September","October","November","December"][active_month] }} {{ active_year }}
+      {% else %}— {{ active_year }}{% endif %}
+    </div>
     <div style="font-size:11px; color:var(--gray-400); font-family:'DM Mono',monospace;">{{ meetings | length }} total</div>
   </div>
 
   {% if not meetings %}
   <div class="coming-soon" style="padding:40px;">
     <i class="ti ti-calendar-off"></i>
-    <h2>No upcoming meetings</h2>
-    <p>Your calendar is clear. Check back later.</p>
+    <h2>No meetings found</h2>
+    <p>No meetings for this period. Try a different month or year.</p>
   </div>
   {% else %}
   <div style="padding:12px 14px; display:flex; flex-direction:column; gap:8px;">
     {% for meeting in meetings %}
     <a href="/meetings/{{ meeting.id }}/brief" class="list-row" style="align-items:flex-start; padding:14px 16px; text-decoration:none; color:inherit;">
 
-      <!-- Avatar + company -->
+      <!-- Avatar -->
       <div class="avatar" style="width:38px;height:38px;font-size:14px;border-radius:var(--radius-md);background:var(--blue-light);color:var(--blue-text);flex-shrink:0;margin-top:2px;">
         {{ meeting.company[:2].upper() }}
       </div>
@@ -84,7 +137,7 @@
       <div class="row-main">
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
           <span style="font-size:14px; font-weight:600;">{{ meeting.company }}</span>
-          <!-- Deal stage pill -->
+
           {% if meeting.deal_stage == 'Closing' %}
             <span class="pill pill-green"><i class="ti ti-star" style="font-size:10px"></i> {{ meeting.deal_stage }}</span>
           {% elif meeting.deal_stage == 'Negotiation' %}
@@ -94,7 +147,7 @@
           {% else %}
             <span class="pill pill-gray">{{ meeting.deal_stage }}</span>
           {% endif %}
-          <!-- Brief status -->
+
           {% if meeting.brief_status == 'ready' %}
             <span class="pill pill-green"><i class="ti ti-check" style="font-size:10px"></i> Brief ready</span>
           {% elif meeting.brief_status == 'generating' %}
@@ -117,7 +170,7 @@
         </div>
       </div>
 
-      <!-- Actions — stop click from bubbling to the row link -->
+      <!-- Actions -->
       <div style="display:flex; gap:6px; flex-shrink:0; align-items:center; margin-top:2px;" onclick="event.preventDefault(); event.stopPropagation();">
         {% if meeting.brief_status == 'ready' %}
           <a href="/meetings/{{ meeting.id }}/brief" class="btn btn-primary btn-sm">
@@ -176,9 +229,8 @@
     try {
       const resp = await fetch('/api/sync-calendar', { method: 'POST' });
       const data = await resp.json();
-      if (resp.ok) {
-        window.location.reload();
-      } else {
+      if (resp.ok) { window.location.reload(); }
+      else {
         alert('Sync failed: ' + (data.detail || 'Unknown error'));
         btn.disabled = false;
         btn.innerHTML = orig;

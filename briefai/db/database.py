@@ -57,7 +57,7 @@ def init_db():
 
 
 def seed_meetings():
-    """Seed sample meeting data."""
+    """Seed sample meeting data using the current year."""
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -68,12 +68,13 @@ def seed_meetings():
         conn.close()
         return
 
+    y = datetime.now().year
     meetings = [
         {
             "id": "meet_001",
             "contact_name": "Rajesh Kumar",
             "company": "Infosys Limited",
-            "meeting_time": "2025-01-15 10:00:00",
+            "meeting_time": f"{y}-06-10 10:00:00",
             "deal_stage": "Proposal",
             "notes": "Discussed cloud migration needs. Budget approved for Q1.",
         },
@@ -81,7 +82,7 @@ def seed_meetings():
             "id": "meet_002",
             "contact_name": "Priya Sharma",
             "company": "Tata Consultancy Services",
-            "meeting_time": "2025-01-15 14:00:00",
+            "meeting_time": f"{y}-06-12 14:00:00",
             "deal_stage": "Negotiation",
             "notes": "Enterprise license pricing discussion. Decision maker involved.",
         },
@@ -89,7 +90,7 @@ def seed_meetings():
             "id": "meet_003",
             "contact_name": "Anand Mehta",
             "company": "Wipro Technologies",
-            "meeting_time": "2025-01-16 11:00:00",
+            "meeting_time": f"{y}-07-03 11:00:00",
             "deal_stage": "Discovery",
             "notes": "Initial call. Exploring AI/ML tooling requirements.",
         },
@@ -97,9 +98,25 @@ def seed_meetings():
             "id": "meet_004",
             "contact_name": "Sarah Johnson",
             "company": "Accenture",
-            "meeting_time": "2025-01-16 15:30:00",
+            "meeting_time": f"{y}-07-18 15:30:00",
             "deal_stage": "Closing",
             "notes": "Final contract review. Legal approved. Awaiting signature.",
+        },
+        {
+            "id": "meet_005",
+            "contact_name": "Michael Chen",
+            "company": "IBM",
+            "meeting_time": f"{y}-08-05 09:00:00",
+            "deal_stage": "Proposal",
+            "notes": "Hybrid cloud architecture review. CTO attending.",
+        },
+        {
+            "id": "meet_006",
+            "contact_name": "Neha Gupta",
+            "company": "HCL Technologies",
+            "meeting_time": f"{y}-09-22 16:00:00",
+            "deal_stage": "Discovery",
+            "notes": "New inbound lead. Digital transformation initiative.",
         },
     ]
 
@@ -141,10 +158,37 @@ def upsert_meetings_from_calendar(meetings: list):
     conn.close()
 
 
-def get_all_meetings() -> List[dict]:
+def get_all_meetings(year: int = None, month: int = None) -> List[dict]:
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM meetings ORDER BY meeting_time ASC")
+    if year and month:
+        cursor.execute(
+            "SELECT * FROM meetings WHERE strftime('%Y', meeting_time) = ? AND strftime('%m', meeting_time) = ? ORDER BY meeting_time ASC",
+            (str(year), f"{month:02d}")
+        )
+    elif year:
+        cursor.execute(
+            "SELECT * FROM meetings WHERE strftime('%Y', meeting_time) = ? ORDER BY meeting_time ASC",
+            (str(year),)
+        )
+    else:
+        cursor.execute("SELECT * FROM meetings ORDER BY meeting_time ASC")
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_meeting_years_months() -> List[dict]:
+    """Return distinct year+month combos present in the meetings table."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT DISTINCT
+            CAST(strftime('%Y', meeting_time) AS INTEGER) AS year,
+            CAST(strftime('%m', meeting_time) AS INTEGER) AS month
+        FROM meetings
+        ORDER BY year, month
+    """)
     rows = cursor.fetchall()
     conn.close()
     return [dict(r) for r in rows]

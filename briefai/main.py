@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Query
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -17,6 +17,7 @@ from db.database import (
     get_all_meetings,
     get_brief_by_meeting_id,
     get_meeting_by_id,
+    get_meeting_years_months,
     init_db,
     save_brief,
     seed_meetings,
@@ -66,13 +67,29 @@ def _meeting_to_display(m: dict) -> dict:
 # ─── HTML Routes ──────────────────────────────────────────────────────────────
 
 @app.get("/", response_class=HTMLResponse)
-def dashboard(request: Request):
-    meetings = get_all_meetings()
+def dashboard(
+    request: Request,
+    year: Optional[int] = Query(default=None),
+    month: Optional[int] = Query(default=None),
+):
+    now = datetime.now()
+    active_year  = year  or now.year
+    active_month = month  # None means "all months in the year"
+
+    meetings = get_all_meetings(year=active_year, month=active_month)
     meetings = [_meeting_to_display(m) for m in meetings]
+    periods  = get_meeting_years_months()
+
     return templates.TemplateResponse(
         request=request,
         name="dashboard.html",
-        context={"meetings": meetings},
+        context={
+            "meetings":     meetings,
+            "periods":      periods,
+            "active_year":  active_year,
+            "active_month": active_month,
+            "current_year": now.year,
+        },
     )
 
 
