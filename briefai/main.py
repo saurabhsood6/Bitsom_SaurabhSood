@@ -38,6 +38,7 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 @app.on_event("startup")
 def startup_event():
     init_db()
+    seed_meetings()   # always ensure mock meetings exist
     if is_google_calendar_configured():
         print("[startup] Google Calendar detected — syncing meetings...")
         try:
@@ -45,11 +46,7 @@ def startup_event():
             upsert_meetings_from_calendar(meetings)
             print(f"[startup] Synced {len(meetings)} meetings from Google Calendar.")
         except Exception as e:
-            print(f"[startup] Google Calendar sync failed: {e}. Falling back to mock data.")
-            seed_meetings()
-    else:
-        print("[startup] No credentials.json found — using mock meeting data.")
-        seed_meetings()
+            print(f"[startup] Google Calendar sync failed: {e}.")
 
 
 def _meeting_to_display(m: dict) -> dict:

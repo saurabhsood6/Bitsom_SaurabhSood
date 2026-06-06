@@ -36,49 +36,59 @@
 </div>
 
 <!-- Year / Month filter bar -->
-<div class="card" style="padding:12px 16px; margin-bottom:16px;">
-  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+{% set month_names = ["","January","February","March","April","May","June","July","August","September","October","November","December"] %}
+{% set months_for_year = periods | selectattr('year', 'equalto', active_year) | map(attribute='month') | list %}
+{% set years = periods | map(attribute='year') | unique | list %}
+
+<div class="card" style="padding:12px 18px; margin-bottom:16px;">
+  <form method="get" action="/" id="filter-form"
+        style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
 
     <span style="font-size:11px; font-weight:600; color:var(--gray-400); text-transform:uppercase; letter-spacing:0.06em; white-space:nowrap;">
-      <i class="ti ti-filter" style="font-size:13px; vertical-align:-2px;"></i> Filter
+      <i class="ti ti-calendar-search" style="font-size:14px; vertical-align:-2px;"></i> Filter by
     </span>
 
-    <!-- Year selector -->
-    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-      {% set years = periods | map(attribute='year') | unique | list %}
-      {% if active_year not in years %}{% set years = [active_year] + years %}{% endif %}
-      {% for y in years | sort %}
-        <a href="/?year={{ y }}"
-           class="pill {% if y == active_year and not active_month %}pill-navy{% else %}pill-gray{% endif %}"
-           style="cursor:pointer; text-decoration:none; font-size:12px; padding:4px 12px;">
-          {{ y }}
-        </a>
-      {% endfor %}
+    <!-- Year dropdown -->
+    <div style="display:flex; align-items:center; gap:6px;">
+      <label for="year-select" style="font-size:12px; color:var(--gray-500); white-space:nowrap;">Year</label>
+      <select id="year-select" name="year" onchange="this.form.submit()"
+        style="padding:5px 28px 5px 10px; border:1px solid var(--gray-300); border-radius:var(--radius-md);
+               font-size:12px; font-family:inherit; color:var(--gray-900); background:var(--white);
+               cursor:pointer; appearance:none; background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22 viewBox=%220 0 10 6%22><path d=%22M0 0l5 6 5-6z%22 fill=%22%236b7280%22/></svg>');
+               background-repeat:no-repeat; background-position:right 8px center;">
+        {% for y in years | sort %}
+          <option value="{{ y }}" {% if y == active_year %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+        {% if active_year not in years %}
+          <option value="{{ active_year }}" selected>{{ active_year }}</option>
+        {% endif %}
+      </select>
     </div>
 
-    <div style="width:1px; height:20px; background:var(--gray-200);"></div>
+    <!-- Month dropdown -->
+    <div style="display:flex; align-items:center; gap:6px;">
+      <label for="month-select" style="font-size:12px; color:var(--gray-500); white-space:nowrap;">Month</label>
+      <select id="month-select" name="month" onchange="this.form.submit()"
+        style="padding:5px 28px 5px 10px; border:1px solid var(--gray-300); border-radius:var(--radius-md);
+               font-size:12px; font-family:inherit; color:var(--gray-900); background:var(--white);
+               cursor:pointer; appearance:none; background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22 viewBox=%220 0 10 6%22><path d=%22M0 0l5 6 5-6z%22 fill=%22%236b7280%22/></svg>');
+               background-repeat:no-repeat; background-position:right 8px center;">
+        <option value="" {% if not active_month %}selected{% endif %}>All months</option>
+        {% for m in range(1, 13) %}
+          {% if m in months_for_year %}
+            <option value="{{ m }}" {% if m == active_month %}selected{% endif %}>{{ month_names[m] }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+    </div>
 
-    <!-- Month selector (only shows months that have data for selected year) -->
-    {% set months_for_year = periods | selectattr('year', 'equalto', active_year) | map(attribute='month') | list %}
-    {% set month_names = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"] %}
-
-    <a href="/?year={{ active_year }}"
-       class="pill {% if not active_month %}pill-blue{% else %}pill-gray{% endif %}"
-       style="cursor:pointer; text-decoration:none; font-size:12px; padding:4px 12px;">
-      All months
+    {% if active_month %}
+    <a href="/?year={{ active_year }}" style="font-size:12px; color:var(--gray-400); text-decoration:none; display:flex; align-items:center; gap:4px;">
+      <i class="ti ti-x" style="font-size:12px;"></i> Clear month
     </a>
+    {% endif %}
 
-    {% for m in range(1, 13) %}
-      {% if m in months_for_year %}
-        <a href="/?year={{ active_year }}&month={{ m }}"
-           class="pill {% if m == active_month %}pill-blue{% else %}pill-gray{% endif %}"
-           style="cursor:pointer; text-decoration:none; font-size:12px; padding:4px 12px;">
-          {{ month_names[m] }}
-        </a>
-      {% endif %}
-    {% endfor %}
-
-  </div>
+  </form>
 </div>
 
 <!-- Stats row -->

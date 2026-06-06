@@ -57,14 +57,13 @@ def init_db():
 
 
 def seed_meetings():
-    """Seed sample meeting data using the current year."""
+    """Seed sample meeting data using the current year. Always ensures mock rows exist."""
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Check if already seeded
-    cursor.execute("SELECT COUNT(*) FROM meetings")
-    count = cursor.fetchone()[0]
-    if count > 0:
+    # Only skip if mock meetings are already present
+    cursor.execute("SELECT COUNT(*) FROM meetings WHERE id LIKE 'meet_%'")
+    if cursor.fetchone()[0] > 0:
         conn.close()
         return
 
@@ -138,8 +137,8 @@ def upsert_meetings_from_calendar(meetings: list):
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Remove mock seed meetings (id starts with 'meet_') so they don't mix with real events
-    cursor.execute("DELETE FROM meetings WHERE id LIKE 'meet_%'")
+    # Only remove stale gcal meetings (not mock seed meetings)
+    cursor.execute("DELETE FROM meetings WHERE id LIKE 'gcal_%'")
 
     for m in meetings:
         cursor.execute(

@@ -103,6 +103,52 @@ MOCK_NEWS_DATA: dict[str, List[NewsArticle]] = {
             url="https://example.com/accenture-aws",
         ),
     ],
+    "IBM": [
+        NewsArticle(
+            title="IBM Reports Strong Hybrid Cloud and AI Revenue Growth",
+            summary="IBM posted 7% growth in its hybrid cloud and AI segment, driven by adoption of the watsonx AI platform and strong consulting demand for enterprise AI transformation projects.",
+            source="Reuters",
+            published_at=(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"),
+            url="https://example.com/ibm-cloud-ai",
+        ),
+        NewsArticle(
+            title="IBM Expands watsonx AI Platform with New Governance Features",
+            summary="IBM announced major governance and compliance features for its watsonx platform, targeting regulated industries like banking, healthcare and government where AI explainability is mandatory.",
+            source="ZDNet",
+            published_at=(datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d"),
+            url="https://example.com/ibm-watsonx",
+        ),
+        NewsArticle(
+            title="IBM and SAP Deepen Partnership for AI-Powered ERP Modernisation",
+            summary="IBM and SAP announced a deepened partnership to help enterprises migrate to SAP S/4HANA using IBM's hybrid cloud infrastructure and AI-powered migration accelerators.",
+            source="Financial Times",
+            published_at=(datetime.now() - timedelta(days=4)).strftime("%Y-%m-%d"),
+            url="https://example.com/ibm-sap",
+        ),
+    ],
+    "HCL Technologies": [
+        NewsArticle(
+            title="HCL Tech Wins $200M Digital Engineering Deal with US Manufacturer",
+            summary="HCL Technologies secured a $200M, 5-year digital engineering and IoT transformation deal with a leading US industrial manufacturer, expanding its manufacturing vertical footprint.",
+            source="Business Standard",
+            published_at=(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"),
+            url="https://example.com/hcl-manufacturing",
+        ),
+        NewsArticle(
+            title="HCLTech Launches AI Force Platform for Enterprise Automation",
+            summary="HCL Technologies unveiled AI Force, its unified AI automation platform combining generative AI, RPA and intelligent document processing, targeting cost reduction of 30–40% for enterprise back-office operations.",
+            source="Economic Times",
+            published_at=(datetime.now() - timedelta(days=2)).strftime("%Y-%m-%d"),
+            url="https://example.com/hcl-aiforce",
+        ),
+        NewsArticle(
+            title="HCL Tech Q3 Revenue Grows 5.6%, Raises Annual Guidance",
+            summary="HCL Technologies reported Q3 revenue of $3.3B, up 5.6% YoY in constant currency, and raised its FY guidance to 6–7% growth, citing strong momentum in engineering services and cloud-native application development.",
+            source="Mint",
+            published_at=(datetime.now() - timedelta(days=5)).strftime("%Y-%m-%d"),
+            url="https://example.com/hcl-q3",
+        ),
+    ],
 }
 
 
