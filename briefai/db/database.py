@@ -29,9 +29,18 @@ def init_db():
             deal_stage TEXT NOT NULL,
             notes TEXT,
             brief_status TEXT DEFAULT 'pending',
+            auto_brief INTEGER DEFAULT 0,
+            notify_email TEXT DEFAULT '',
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
     """)
+
+    # Add new columns if upgrading from older schema
+    for col, defval in [("auto_brief", "0"), ("notify_email", "''")]:
+        try:
+            cursor.execute(f"ALTER TABLE meetings ADD COLUMN {col} {'INTEGER' if col == 'auto_brief' else 'TEXT'} DEFAULT {defval}")
+        except Exception:
+            pass  # column already exists
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS briefs (
@@ -211,6 +220,45 @@ def update_meeting_brief_status(meeting_id: str, status: str):
     )
     conn.commit()
     conn.close()
+
+
+def sync_brief_statuses():
+    """Fix any meetings whose status says pending but a brief already exists in the briefs table."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE meetings SET brief_status = 'ready'
+        WHERE id IN (SELECT DISTINCT meeting_id FROM briefs)
+        AND brief_status != 'ready'
+    """)
+    conn.commit()
+    conn.close()
+
+
+def update_meeting_auto_brief(meeting_id: str, auto_brief: bool, notify_email: str):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE meetings SET auto_brief = ?, notify_email = ? WHERE id = ?",
+        (1 if auto_brief else 0, notify_email.strip(), meeting_id)
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_meetings_for_auto_brief() -> List[dict]:
+    """Return meetings with auto_brief=1 scheduled in the next 2–3 hours that have no ready brief."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT * FROM meetings
+        WHERE auto_brief = 1
+        AND brief_status != 'ready'
+        AND datetime(meeting_time) BETWEEN datetime('now', '+1 hour') AND datetime('now', '+3 hours')
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
 
 
 def update_meeting_stage(meeting_id: str, stage: str):
