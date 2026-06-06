@@ -116,6 +116,27 @@ def seed_meetings():
     conn.close()
 
 
+def upsert_meetings_from_calendar(meetings: list):
+    """Insert or update meetings synced from Google Calendar."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    for m in meetings:
+        cursor.execute(
+            """INSERT INTO meetings (id, contact_name, company, meeting_time, deal_stage, notes, brief_status)
+               VALUES (?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(id) DO UPDATE SET
+                 contact_name = excluded.contact_name,
+                 company      = excluded.company,
+                 meeting_time = excluded.meeting_time,
+                 notes        = excluded.notes""",
+            (m["id"], m["contact_name"], m["company"],
+             m["meeting_time"], m.get("deal_stage", "Discovery"),
+             m.get("notes", ""), m.get("brief_status", "pending"))
+        )
+    conn.commit()
+    conn.close()
+
+
 def get_all_meetings() -> List[dict]:
     conn = get_connection()
     cursor = conn.cursor()

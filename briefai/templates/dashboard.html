@@ -8,6 +8,10 @@
   {% if ready_count > 0 %}
   <span class="topbar-badge">{{ ready_count }} brief{{ 's' if ready_count != 1 else '' }} ready</span>
   {% endif %}
+  <button class="btn btn-sm" id="sync-btn" onclick="syncCalendar()"
+    style="background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.2);color:#fff;font-size:11px;">
+    <i class="ti ti-calendar-sync"></i> Sync Calendar
+  </button>
 {% endblock %}
 
 {% block content %}
@@ -154,6 +158,28 @@
         window.location.reload();
       } else {
         alert('Failed: ' + (data.detail || 'Unknown error'));
+        btn.disabled = false;
+        btn.innerHTML = orig;
+      }
+    } catch (err) {
+      alert('Network error: ' + err.message);
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }
+  }
+
+  async function syncCalendar() {
+    const btn = document.getElementById('sync-btn');
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader"></i> Syncing…';
+    try {
+      const resp = await fetch('/api/sync-calendar', { method: 'POST' });
+      const data = await resp.json();
+      if (resp.ok) {
+        window.location.reload();
+      } else {
+        alert('Sync failed: ' + (data.detail || 'Unknown error'));
         btn.disabled = false;
         btn.innerHTML = orig;
       }

@@ -21,8 +21,10 @@ from db.database import (
     save_brief,
     seed_meetings,
     update_meeting_brief_status,
+    upsert_meetings_from_calendar,
 )
 from integrations.notification import notify
+from integrations.google_calendar import fetch_upcoming_from_google, is_google_calendar_configured
 from models.schemas import Brief, BriefGenerationRequest, NotificationRequest
 
 app = FastAPI(title="BriefAI", description="AI-Powered Sales Intelligence Agent", version="1.0.0")
@@ -35,7 +37,18 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 @app.on_event("startup")
 def startup_event():
     init_db()
-    seed_meetings()
+    if is_google_calendar_configured():
+        print("[startup] Google Calendar detected — syncing meetings...")
+        try:
+            meetings = fetch_upcoming_from_google()
+            upsert_meetings_from_calendar(meetings)
+            print(f"[startup] Synced {len(meetings)} meetings from Google Calendar.")
+        except Exception as e:
+            print(f"[startup] Google Calendar sync failed: {e}. Falling back to mock data.")
+            seed_meetings()
+    else:
+        print("[startup] No credentials.json found — using mock meeting data.")
+        seed_meetings()
 
 
 def _meeting_to_display(m: dict) -> dict:
@@ -143,6 +156,21 @@ def send_notification(req: NotificationRequest):
 
     success = notify(brief, channel=req.channel, email_to=req.email_to)
     return {"status": "sent" if success else "fallback", "channel": req.channel}
+
+
+@app.post("/api/sync-calendar")
+def sync_calendar():
+    if not is_google_calendar_configured():
+        raise HTTPException(
+            status_code=400,
+            detail="credentials.json not found. Place it in the briefai/ folder and restart."
+        )
+    try:
+        meetings = fetch_upcoming_from_google()
+        upsert_meetings_from_calendar(meetings)
+        return {"status": "success", "synced": len(meetings)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Calendar sync failed: {str(e)}")
 
 
 if __name__ == "__main__":
