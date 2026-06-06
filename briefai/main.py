@@ -57,8 +57,9 @@ def dashboard(request: Request):
     meetings = get_all_meetings()
     meetings = [_meeting_to_display(m) for m in meetings]
     return templates.TemplateResponse(
-        "dashboard.html",
-        {"request": request, "meetings": meetings},
+        request=request,
+        name="dashboard.html",
+        context={"meetings": meetings},
     )
 
 
@@ -70,8 +71,9 @@ def brief_page(request: Request, meeting_id: str):
     meeting = _meeting_to_display(meeting)
     brief = get_brief_by_meeting_id(meeting_id)
     return templates.TemplateResponse(
-        "brief.html",
-        {"request": request, "meeting": meeting, "brief": brief},
+        request=request,
+        name="brief.html",
+        context={"meeting": meeting, "brief": brief},
     )
 
 
