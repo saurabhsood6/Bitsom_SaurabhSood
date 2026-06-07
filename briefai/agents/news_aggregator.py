@@ -155,6 +155,7 @@ MOCK_NEWS_DATA: dict[str, List[NewsArticle]] = {
 def _fetch_from_newsapi(company: str) -> List[NewsArticle]:
     """Fetch real news from NewsAPI."""
     if not NEWSAPI_KEY:
+        print(f"[NewsAggregator] NEWSAPI_KEY is not set — skipping live fetch for '{company}', using mock data.")
         return []
 
     try:

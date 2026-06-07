@@ -77,6 +77,12 @@ def startup_event():
     init_db()
     seed_meetings()
 
+    if os.getenv("NEWSAPI_KEY", ""):
+        print("[startup] NEWSAPI_KEY loaded — live news fetching enabled.")
+    else:
+        print("[startup] NEWSAPI_KEY not set — news will fall back to mock data. "
+              "Add NEWSAPI_KEY to briefai/.env and restart the server.")
+
     if is_google_calendar_configured():
         print("[startup] Google Calendar detected — syncing meetings...")
         try:
