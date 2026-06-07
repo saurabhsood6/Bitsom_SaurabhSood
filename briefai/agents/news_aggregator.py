@@ -158,7 +158,9 @@ def _fetch_from_newsapi(company: str) -> List[NewsArticle]:
         return []
 
     try:
-        from_date = (datetime.now() - timedelta(days=5)).strftime("%Y-%m-%d")
+        # Free-tier NewsAPI plans only index articles with some delay, so requesting
+        # the last 24h often returns zero results — go back a bit further instead.
+        from_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
         url = "https://newsapi.org/v2/everything"
         params = {
             "q": company,
@@ -169,22 +171,38 @@ def _fetch_from_newsapi(company: str) -> List[NewsArticle]:
             "apiKey": NEWSAPI_KEY,
         }
         response = requests.get(url, params=params, timeout=10)
-        response.raise_for_status()
+
+        if response.status_code != 200:
+            try:
+                detail = response.json().get("message", response.text)
+            except Exception:
+                detail = response.text
+            print(f"[NewsAggregator] NewsAPI returned HTTP {response.status_code} for '{company}': {detail}. Using mock data.")
+            return []
+
         data = response.json()
+        if data.get("status") != "ok":
+            print(f"[NewsAggregator] NewsAPI error for '{company}': {data.get('message', data)}. Using mock data.")
+            return []
+
         articles = []
         for art in data.get("articles", []):
             articles.append(
                 NewsArticle(
                     title=art.get("title", "No title"),
-                    summary=art.get("description") or art.get("content", "")[:300],
+                    summary=art.get("description") or (art.get("content") or "")[:300],
                     source=art.get("source", {}).get("name", "Unknown"),
                     published_at=art.get("publishedAt", "")[:10],
                     url=art.get("url", ""),
                 )
             )
+
+        if not articles:
+            print(f"[NewsAggregator] NewsAPI returned 0 articles for '{company}'. Using mock data.")
+
         return articles
     except Exception as e:
-        print(f"[NewsAggregator] NewsAPI fetch failed: {e}. Using mock data.")
+        print(f"[NewsAggregator] NewsAPI fetch failed for '{company}': {e}. Using mock data.")
         return []
 
 
