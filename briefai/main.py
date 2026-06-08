@@ -137,11 +137,11 @@ def _brief_from_db(brief_data: dict) -> Brief:
 def dashboard(
     request: Request,
     year: Optional[int] = Query(default=None),
-    month: Optional[int] = Query(default=None),
+    month: Optional[str] = Query(default=None),
 ):
     now = datetime.now()
     active_year  = year or now.year
-    active_month = month
+    active_month = int(month) if month else None
 
     meetings = get_all_meetings(year=active_year, month=active_month)
     meetings = [_meeting_to_display(m) for m in meetings]
