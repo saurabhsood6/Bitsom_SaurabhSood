@@ -68,9 +68,15 @@ def _get_credentials():
         creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), SCOPES)
 
     if not creds or not creds.valid:
+        refreshed = False
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
+            try:
+                creds.refresh(Request())
+                refreshed = True
+            except Exception as e:
+                print(f"[google_calendar] Token refresh failed ({e}); re-running OAuth consent flow.")
+
+        if not refreshed:
             if not CREDENTIALS_FILE.exists():
                 raise FileNotFoundError(
                     f"credentials.json not found at {CREDENTIALS_FILE}. "
